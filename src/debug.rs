@@ -56,6 +56,7 @@ impl<'a> Disassembler<'a> {
             OpSubtract => self.simple_instruction("OP_SUBTRACT"),
             OpMultiply => self.simple_instruction("OP_MULTIPLY"),
             OpDivide => self.simple_instruction("OP_DIVIDE"),
+            OpMod => self.simple_instruction("OP_MOD"),
             OpNot => self.simple_instruction("OP_NOT"),
             OpNegate => self.simple_instruction("OP_NEGATE"),
             OpPrint => self.simple_instruction("OP_PRINT"),

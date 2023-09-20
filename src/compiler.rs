@@ -769,6 +769,7 @@ impl<'a> Parser<'a> {
             Minus => self.emit_byte(OpSubtract),
             Star => self.emit_byte(OpMultiply),
             Slash => self.emit_byte(OpDivide),
+            Percent => self.emit_byte(OpMod),
             _ => unreachable!(),
         };
     }
@@ -827,6 +828,11 @@ impl<'a> Parser<'a> {
             self.emit_byte(get_op);
             self.expression();
             self.emit_byte(OpCode::OpDivide);
+            self.emit_byte(set_op);
+        } else if self.matches(TokenType::PercentEqual) {
+            self.emit_byte(get_op);
+            self.expression();
+            self.emit_byte(OpCode::OpMod);
             self.emit_byte(set_op);
         } else {
             return false;
@@ -1085,6 +1091,7 @@ impl<'a> ParseRule<'a> {
             TokenType::Semicolon => Self::new(None, None, Precedence::None),
             TokenType::Slash => Self::new(None, Some(Parser::binary), Precedence::Factor),
             TokenType::Star => Self::new(None, Some(Parser::binary), Precedence::Factor),
+            TokenType::Percent => Self::new(None, Some(Parser::binary), Precedence::Factor),
             TokenType::Bang => Self::new(Some(Parser::unary), None, Precedence::None),
             TokenType::BangEqual => Self::new(None, Some(Parser::binary), Precedence::Equality),
             TokenType::Equal => Self::new(None, None, Precedence::None),
@@ -1123,6 +1130,7 @@ impl<'a> ParseRule<'a> {
             TokenType::MinusEqual => Self::new(None, None, Precedence::None),
             TokenType::StarEqual => Self::new(None, None, Precedence::None),
             TokenType::SlashEqual => Self::new(None, None, Precedence::None),
+            TokenType::PercentEqual => Self::new(None, None, Precedence::None),
         }
     }
 }

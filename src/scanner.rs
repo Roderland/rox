@@ -41,6 +41,7 @@ impl<'a> Scanner<'a> {
                 '+' => self.match_token('=', PlusEqual, Plus),
                 '/' => self.scan_comment(),
                 '*' => self.match_token('=', StarEqual, Star),
+                '%' => self.match_token('=', PercentEqual, Percent),
                 '!' => self.match_token('=', BangEqual, Bang),
                 '=' => self.match_token('=', EqualEqual, Equal),
                 '<' => self.match_token('=', LessEqual, Less),
@@ -221,6 +222,7 @@ pub enum TokenType {
     Semicolon,
     Slash,
     Star,
+    Percent,
 
     Bang,
     BangEqual,
@@ -262,6 +264,7 @@ pub enum TokenType {
     MinusEqual,
     StarEqual,
     SlashEqual,
+    PercentEqual,
 }
 
 #[derive(Clone)]

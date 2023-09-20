@@ -522,6 +522,7 @@ impl VM {
                 OpSubtract => binary_op!(self, -),
                 OpMultiply => binary_op!(self, *),
                 OpDivide => binary_op!(self, /),
+                OpMod => binary_op!(self, %),
                 OpNot => {
                     let value = self.pop().is_falsey();
                     self.push(value.into())

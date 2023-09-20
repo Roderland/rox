@@ -24,6 +24,7 @@ pub enum OpCode {
     OpSubtract,
     OpMultiply,
     OpDivide,
+    OpMod,
     OpNot,
     OpNegate,
     OpPrint,
