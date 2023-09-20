@@ -8,6 +8,8 @@ use crate::debug::Disassembler;
 
 use std::mem;
 
+const LOOP_START_INVALID: usize = usize::MAX;
+
 pub struct Parser<'a> {
     gc: &'a mut Gc,
     scanner: Scanner<'a>,
@@ -26,6 +28,9 @@ struct Compiler<'a> {
     scope_depth: i32,
     function: Function,
     function_type: FunctionType,
+
+    loop_start: usize,
+    loop_end_stack: Vec<usize>,
 }
 
 #[derive(Clone)]
@@ -75,6 +80,8 @@ impl<'a> Compiler<'a> {
             scope_depth: 0,
             function: Function::new(name),
             function_type: ftype,
+            loop_start: LOOP_START_INVALID,
+            loop_end_stack: Vec::new(),
         };
 
         let local = if ftype != FunctionType::Function {
@@ -311,6 +318,12 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn patch_break(&mut self) {
+        while let Some(exit) = self.compiler.loop_end_stack.pop() {
+            self.patch_jump(exit);
+        }
+    }
+
     fn expression(&mut self) {
         self.parse_precedence(Precedence::Assignment);
     }
@@ -336,6 +349,10 @@ impl<'a> Parser<'a> {
             self.begin_scope();
             self.block();
             self.end_scope();
+        } else if self.matches(TokenType::Break) {
+            self.break_statement();
+        } else if self.matches(TokenType::Continue) {
+            self.continue_statement();
         } else {
             self.expression_statement();
         }
@@ -378,6 +395,7 @@ impl<'a> Parser<'a> {
         }
 
         let mut loop_start = self.chunk().code.len();
+        self.compiler.loop_start = loop_start;
         let mut exit_jump = usize::MAX;
         if !self.matches(TokenType::Semicolon) {
             self.expression();
@@ -397,6 +415,7 @@ impl<'a> Parser<'a> {
 
             self.emit_loop(loop_start);
             loop_start = increment_start;
+            self.compiler.loop_start = loop_start;
             self.patch_jump(body_jump);
         }
 
@@ -407,6 +426,8 @@ impl<'a> Parser<'a> {
             self.patch_jump(exit_jump);
             self.emit_byte(OpCode::OpPop);
         }
+
+        self.patch_break();
 
         self.end_scope();
     }
@@ -435,6 +456,7 @@ impl<'a> Parser<'a> {
 
     fn while_statement(&mut self) {
         let loop_start = self.chunk_mut().code.len();
+        self.compiler.loop_start = loop_start;
 
         self.consume(TokenType::LeftParen, "Expect '(' after 'while'.");
         self.expression();
@@ -448,6 +470,27 @@ impl<'a> Parser<'a> {
 
         self.patch_jump(exit_jump);
         self.emit_byte(OpCode::OpPop);
+
+        self.patch_break();
+    }
+
+    fn break_statement(&mut self) {
+        if self.compiler.loop_start == LOOP_START_INVALID {
+            self.error("Break must in a loop.");
+        }
+
+        let exit = self.emit_byte(OpCode::OpJump(0xffff)).clone();
+        self.compiler.loop_end_stack.push(exit);
+        self.consume(TokenType::Semicolon, "Expect ';' after 'break'.");
+    }
+
+    fn continue_statement(&mut self) {
+        if self.compiler.loop_start == LOOP_START_INVALID {
+            self.error("Continue must in a loop.");
+        }
+
+        self.emit_loop(self.compiler.loop_start);
+        self.consume(TokenType::Semicolon, "Expect ';' after 'continue'.");
     }
 
     fn declaration(&mut self) {
@@ -1037,6 +1080,8 @@ impl<'a> ParseRule<'a> {
             TokenType::While => Self::new(None, None, Precedence::None),
             TokenType::Error => Self::new(None, None, Precedence::None),
             TokenType::Eof => Self::new(None, None, Precedence::None),
+            TokenType::Break => Self::new(None, None, Precedence::None),
+            TokenType::Continue => Self::new(None, None, Precedence::None),
         }
     }
 }

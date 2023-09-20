@@ -181,6 +181,8 @@ impl<'a> Scanner<'a> {
             "true" => True,
             "var" => Var,
             "while" => While,
+            "break" => Break,
+            "continue" => Continue,
             _ => Identifier,
         }
     }
@@ -241,6 +243,9 @@ pub enum TokenType {
 
     Error,
     Eof,
+
+    Break,
+    Continue,
 }
 
 #[derive(Clone)]
