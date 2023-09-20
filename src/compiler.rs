@@ -691,12 +691,11 @@ impl<'a> Parser<'a> {
             set_op = OpCode::OpSetGlobal(index);
         };
 
-        if can_assign && self.matches(TokenType::Equal) {
-            self.expression();
-            self.emit_byte(set_op);
-        } else {
-            self.emit_byte(get_op);
+        if can_assign && self.assign_equal(get_op, set_op) {
+            return;
         }
+
+        self.emit_byte(get_op);
     }
 
     fn variable(&mut self, can_assign: bool) {
@@ -792,15 +791,47 @@ impl<'a> Parser<'a> {
         self.consume(TokenType::Identifier, "Expect property name after '.'.");
         let name = self.identifier_constant(self.previous.value);
 
-        if can_assign && self.matches(TokenType::Equal) {
-            self.expression();
-            self.emit_byte(OpCode::OpSetProperty(name));
-        } else if self.matches(TokenType::LeftParen) {
+        if can_assign && self.assign_equal(OpCode::OpGetProperty(name), OpCode::OpSetProperty(name)) {
+            return;
+        }
+
+        if self.matches(TokenType::LeftParen) {
             let arg_count = self.argument_list();
             self.emit_byte(OpCode::OpInvoke(name, arg_count));
-        } else {
-            self.emit_byte(OpCode::OpGetProperty(name));
+            return;
         }
+
+        self.emit_byte(OpCode::OpGetProperty(name));
+    }
+
+    fn assign_equal(&mut self, get_op: OpCode, set_op: OpCode) -> bool {
+        if self.matches(TokenType::Equal) {
+            self.expression();
+            self.emit_byte(set_op);
+        } else if self.matches(TokenType::PlusEqual) {
+            self.emit_byte(get_op);
+            self.expression();
+            self.emit_byte(OpCode::OpAdd);
+            self.emit_byte(set_op);
+        } else if self.matches(TokenType::MinusEqual) {
+            self.emit_byte(get_op);
+            self.expression();
+            self.emit_byte(OpCode::OpSubtract);
+            self.emit_byte(set_op);
+        } else if self.matches(TokenType::StarEqual) {
+            self.emit_byte(get_op);
+            self.expression();
+            self.emit_byte(OpCode::OpMultiply);
+            self.emit_byte(set_op);
+        } else if self.matches(TokenType::SlashEqual) {
+            self.emit_byte(get_op);
+            self.expression();
+            self.emit_byte(OpCode::OpDivide);
+            self.emit_byte(set_op);
+        } else {
+            return false;
+        }
+        true
     }
 
     fn parse_precedence(&mut self, precedence: Precedence) {
@@ -820,7 +851,12 @@ impl<'a> Parser<'a> {
             infix_rule(self, can_assign);
         }
 
-        if can_assign && self.matches(TokenType::Equal) {
+        if can_assign && (self.matches(TokenType::Equal)
+            || self.matches(TokenType::PlusEqual)
+            || self.matches(TokenType::MinusEqual)
+            || self.matches(TokenType::StarEqual)
+            || self.matches(TokenType::SlashEqual)
+        ) {
             self.error("Invalid assignment target.");
         }
     }
@@ -1082,6 +1118,11 @@ impl<'a> ParseRule<'a> {
             TokenType::Eof => Self::new(None, None, Precedence::None),
             TokenType::Break => Self::new(None, None, Precedence::None),
             TokenType::Continue => Self::new(None, None, Precedence::None),
+
+            TokenType::PlusEqual => Self::new(None, None, Precedence::None),
+            TokenType::MinusEqual => Self::new(None, None, Precedence::None),
+            TokenType::StarEqual => Self::new(None, None, Precedence::None),
+            TokenType::SlashEqual => Self::new(None, None, Precedence::None),
         }
     }
 }
