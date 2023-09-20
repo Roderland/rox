@@ -1,0 +1,14 @@
+for (var i = 0; i < 10; i = i+1) {
+    if (i == 0) {
+        continue;
+    }
+    for (var j = i+1; j < 10; j = j+1) {
+        if (j == 2) {
+            continue;
+        }
+        if (j == 9) {
+            continue;
+        }
+        print j;
+    }
+}
