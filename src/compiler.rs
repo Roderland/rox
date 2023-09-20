@@ -319,8 +319,8 @@ impl<'a> Parser<'a> {
     }
 
     fn patch_break(&mut self) {
-        while let Some(exit) = self.compiler.loop_end_stack.pop() {
-            self.patch_jump(exit);
+        while let Some(loop_end) = self.compiler.loop_end_stack.pop() {
+            self.patch_jump(loop_end);
         }
     }
 
@@ -479,8 +479,8 @@ impl<'a> Parser<'a> {
             self.error("Break must in a loop.");
         }
 
-        let exit = self.emit_byte(OpCode::OpJump(0xffff)).clone();
-        self.compiler.loop_end_stack.push(exit);
+        let loop_end = self.emit_byte(OpCode::OpJump(0xffff)).clone();
+        self.compiler.loop_end_stack.push(loop_end);
         self.consume(TokenType::Semicolon, "Expect ';' after 'break'.");
     }
 
