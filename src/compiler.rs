@@ -987,7 +987,7 @@ impl<'a> Parser<'a> {
             }
 
             match self.current.kind {
-                Class | Fun | Var | For | If | While | Print | Return => return,
+                Class | Fun | Var | For | If | While | Print | Return | Break | Continue => return,
                 _ => (),
             }
 
