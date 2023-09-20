@@ -37,10 +37,10 @@ impl<'a> Scanner<'a> {
                 ';' => self.make_token(Semicolon),
                 ',' => self.make_token(Comma),
                 '.' => self.make_token(Dot),
-                '-' => self.make_token(Minus),
-                '+' => self.make_token(Plus),
+                '-' => self.match_token('=', MinusEqual, Minus),
+                '+' => self.match_token('=', PlusEqual, Plus),
                 '/' => self.scan_comment(),
-                '*' => self.make_token(Star),
+                '*' => self.match_token('=', StarEqual, Star),
                 '!' => self.match_token('=', BangEqual, Bang),
                 '=' => self.match_token('=', EqualEqual, Equal),
                 '<' => self.match_token('=', LessEqual, Less),
@@ -100,15 +100,26 @@ impl<'a> Scanner<'a> {
     }
 
     fn scan_comment(&mut self) -> Option<Token<'a>> {
-        if self.source.peek() == Some(&'/') {
-            self.advance();
-            while self.source.peek().map_or(false, |&ch| ch != '\n') {
-                self.advance();
-            }
+        if let Some(ch) = self.source.peek() {
+            match ch {
+                '/' => {
+                    self.advance();
+                    while self.source.peek().map_or(false, |&ch| ch != '\n') {
+                        self.advance();
+                    }
 
-            self.scan_token()
+                    self.scan_token()
+                },
+                '=' => {
+                    self.advance();
+                    self.make_token(TokenType::SlashEqual)
+                }
+                _ => {
+                    self.make_token(TokenType::Slash)
+                }
+            }
         } else {
-            self.make_token(TokenType::Slash)
+            return self.error_token("Unterminated character after '/'.");
         }
     }
 
@@ -246,6 +257,11 @@ pub enum TokenType {
 
     Break,
     Continue,
+
+    PlusEqual,
+    MinusEqual,
+    StarEqual,
+    SlashEqual,
 }
 
 #[derive(Clone)]
