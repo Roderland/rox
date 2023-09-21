@@ -6,7 +6,9 @@
     a[0] = 2;
     print b;                // [[2, 'hello'], []]
     var c = "world";
-    b.append(c);
+    var d = "are you ok?";
+    append(b, c, d);
+    //b.append(c);
     print b;                // [[2, 'hello'], [], 'world']
     c = 1;
     print b;                // [[2, 'hello'], [], 'world']

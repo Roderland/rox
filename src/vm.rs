@@ -98,6 +98,7 @@ impl VM {
         };
 
         vm.define_native("clock", 0, Native(clock_native));
+        vm.define_native("append", 0, Native(list_append));
         vm
     }
 
@@ -207,7 +208,7 @@ impl VM {
             Value::Closure(closure) => self.call(closure, arg_count),
             Value::NativeFunction(function) => {
                 let offset = self.stack.len() - arg_count;
-                let value = function.0(arg_count, &self.stack[offset..]);
+                let value = function.0(arg_count, &self.stack[offset..], &mut self.gc);
                 self.stack.truncate(offset - 1);
                 self.push(value);
                 true

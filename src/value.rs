@@ -2,7 +2,7 @@ use std::fmt::{Debug, Display};
 use std::mem;
 
 use crate::chunk::{Chunk, OpCode};
-use crate::gc::{GcRef, GcTrace};
+use crate::gc::{Gc, GcRef, GcTrace};
 use crate::table::Table;
 
 impl GcTrace for String {
@@ -147,7 +147,7 @@ impl GcTrace for Function {
 }
 
 #[derive(Clone, Copy)]
-pub struct Native(pub fn(usize, &[Value]) -> Value);
+pub struct Native(pub fn(usize, &[Value], &mut Gc) -> Value);
 
 impl PartialEq for Native {
     fn eq(&self, other: &Self) -> bool {
