@@ -37,6 +37,7 @@ pub enum Value {
     Class(GcRef<Class>),
     Instance(GcRef<Instance>),
     BoundMethod(GcRef<BoundMethod>),
+    RoxList(GcRef<RoxList>),
 }
 
 impl Value {
@@ -57,6 +58,7 @@ impl GcTrace for Value {
             Value::Nil => write!(f, "nil"),
             Value::Number(value) => write!(f, "{}", value),
             Value::String(value) => gc.deref(*value).format(f, gc),
+            Value::RoxList(value) => gc.deref(*value).format(f, gc),
         }
     }
 
@@ -71,6 +73,7 @@ impl GcTrace for Value {
             Value::Closure(value) => gc.mark_object(*value),
             Value::Instance(value) => gc.mark_object(*value),
             Value::String(value) => gc.mark_object(*value),
+            Value::RoxList(value) => gc.mark_object(*value),
             _ => (),
         }
     }
@@ -343,6 +346,39 @@ impl GcTrace for BoundMethod {
     fn trace(&self, gc: &mut crate::gc::Gc) {
         gc.mark_object(self.method);
         gc.mark_value(self.receiver);
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+}
+
+type RoxList = Vec<Value>;
+
+impl GcTrace for RoxList {
+    fn format(&self, f: &mut std::fmt::Formatter, gc: &crate::gc::Gc) -> std::fmt::Result {
+        write!(f, "[")?;
+        for (idx, elem) in self.into_iter().enumerate() {
+            elem.format(f, gc)?;
+            if idx + 1 < self.len() {
+                write!(f, ", ")?;
+            }
+        }
+        write!(f, "]")
+    }
+
+    fn size(&self) -> usize {
+        mem::size_of::<Self>() + self.len() * mem::size_of::<Value>()
+    }
+
+    fn trace(&self, gc: &mut crate::gc::Gc) {
+        for &elem in self.into_iter() {
+            gc.mark_value(elem)
+        }
     }
 
     fn as_any(&self) -> &dyn std::any::Any {

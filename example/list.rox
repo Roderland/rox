@@ -1,0 +1,13 @@
+{
+    var a = [1, "hello"];
+    print a;                // [1, 'hello']
+    var b = [a, []];
+    print b;                // [[1, 'hello'], []]
+    a[0] = 2;
+    print b;                // [[2, 'hello'], []]
+    var c = "world";
+    b.append(c);
+    print b;                // [[2, 'hello'], [], 'world']
+    c = 1;
+    print b;                // [[2, 'hello'], [], 'world']
+}

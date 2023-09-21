@@ -641,6 +641,57 @@ impl VM {
                     let name = self.current_chunk().read_string(index);
                     self.define_method(name)
                 }
+                OpListInit(mut elem_count) => {
+                    let mut list = Vec::with_capacity(elem_count as usize);
+                    while elem_count > 0 {
+                        list.push(self.pop());
+                        elem_count -= 1;
+                    }
+                    list.reverse();
+                    let list = self.alloc(list);
+                    self.push(Value::RoxList(list));
+                }
+                OpListGet => {
+                    let index = self.pop();
+                    if let Value::RoxList(list) = self.peek(0) {
+                        let list = self.gc.deref(list);
+                        if let Value::Number(index) = index {
+                            let index = index.floor() as usize;
+                            if index >= list.len() {
+                                self.runtime_error("Index out of range.");
+                                return InterpretResult::RuntimeError;
+                            }
+                            self.push(list[index]);
+                        } else {
+                            self.runtime_error("Index must be a number.");
+                            return InterpretResult::RuntimeError;
+                        }
+                    } else {
+                        self.runtime_error("Variable must be a list.");
+                        return InterpretResult::RuntimeError;
+                    }
+                }
+                OpListSet => {
+                    let new_value = self.pop();
+                    let index = self.pop();
+                    if let Value::RoxList(list) = self.peek(0) {
+                        let list = self.gc.deref_mut(list);
+                        if let Value::Number(index) = index {
+                            let index = index.floor() as usize;
+                            if index >= list.len() {
+                                self.runtime_error("Index out of range.");
+                                return InterpretResult::RuntimeError;
+                            }
+                            list[index] = new_value;
+                        } else {
+                            self.runtime_error("Index must be a number.");
+                            return InterpretResult::RuntimeError;
+                        }
+                    } else {
+                        self.runtime_error("Variable must be a list.");
+                        return InterpretResult::RuntimeError;
+                    }
+                }
             }
         }
     }

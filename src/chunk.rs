@@ -40,6 +40,9 @@ pub enum OpCode {
     OpClass(u8),
     OpInherit,
     OpMethod(u8),
+    OpListInit(u8),
+    OpListGet,
+    OpListSet,
 }
 
 #[derive(Debug)]

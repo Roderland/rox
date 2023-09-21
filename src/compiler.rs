@@ -895,6 +895,37 @@ impl<'a> Parser<'a> {
         arg_count
     }
 
+    fn list_init(&mut self, _can_assign: bool) {
+        let mut elem_count = 0;
+        if !self.check(TokenType::RightBracket) {
+            loop {
+                self.expression();
+                if elem_count == u8::MAX {
+                    self.error("Can't have more than 255 list elems.");
+                }
+                elem_count += 1;
+                if !self.matches(TokenType::Comma) {
+                    break;
+                }
+            }
+        }
+
+        self.consume(TokenType::RightBracket, "Expect ']' after list elems init.");
+        self.emit_byte(OpCode::OpListInit(elem_count));
+    }
+
+    fn list_elem(&mut self, _can_assign: bool) {
+        self.expression();
+        self.consume(TokenType::RightBracket, "Expect ']' after a list index range.");
+
+        if self.matches(TokenType::Equal) {
+            self.expression();
+            self.emit_byte(OpCode::OpListSet);
+        } else {
+            self.emit_byte(OpCode::OpListGet);
+        }
+    }
+
     fn and(&mut self, _can_assign: bool) {
         let end_jump = self.emit_byte(OpCode::OpJumpIfFalse(0xffff));
 
@@ -1082,6 +1113,8 @@ impl<'a> ParseRule<'a> {
             TokenType::RightParen => Self::new(None, None, Precedence::None),
             TokenType::LeftBrace => Self::new(None, None, Precedence::None),
             TokenType::RightBrace => Self::new(None, None, Precedence::None),
+            TokenType::LeftBracket => Self::new(Some(Parser::list_init), Some(Parser::list_elem), Precedence::Call),
+            TokenType::RightBracket => Self::new(None, None, Precedence::None),
             TokenType::Comma => Self::new(None, None, Precedence::None),
             TokenType::Dot => Self::new(None, Some(Parser::dot), Precedence::Call),
             TokenType::Minus => {

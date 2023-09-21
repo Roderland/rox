@@ -89,6 +89,9 @@ impl<'a> Disassembler<'a> {
             OpClass(c) => self.constant_instruction("OP_CLASS", c),
             OpInherit => self.simple_instruction("OP_INHERIT"),
             OpMethod(c) => self.constant_instruction("OP_METHOD", c),
+            OpListInit(c) => self.constant_instruction("OP_LIST_INIT", c),
+            OpListGet => self.simple_instruction("OP_LIST_GET"),
+            OpListSet => self.simple_instruction("OP_LIST_SET"),
         }
 
         offset + 1
