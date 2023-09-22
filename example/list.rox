@@ -12,4 +12,10 @@
     print b;                // [[2, 'hello'], [], 'world']
     c = 1;
     print b;                // [[2, 'hello'], [], 'world']
+
+    var myList = List();
+    myList.append(b);
+    print myList;
+    print myList.get(0);
+    print myList.get(0)[0][1];
 }

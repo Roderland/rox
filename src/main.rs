@@ -36,9 +36,23 @@ fn repl() {
 fn run_file(path: &str) {
     let contents = fs::read_to_string(path).expect("Could not read the file.");
     let mut vm = VM::new();
+    load_lib(&mut vm).unwrap();
     match vm.interpret(&contents) {
         InterpretResult::Ok => (),
         InterpretResult::CompileError => exit(65),
         InterpretResult::RuntimeError => exit(70),
     }
+}
+
+fn load_lib(vm: &mut VM) -> Result<(), io::Error> {
+    let entries = fs::read_dir("lib")?
+        .map(|res| res.map(|e| e.path()))
+        .collect::<Result<Vec<_>, io::Error>>()?;
+
+    for x in entries.into_iter() {
+        let contents = fs::read_to_string(x)?;
+        vm.interpret(&contents);
+    }
+
+    Ok(())
 }

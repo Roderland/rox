@@ -1,0 +1,7 @@
+class List {
+    init() { this.elems = []; }
+    append(value) { append(this.elems, value); }
+    // string() { print this.elems; }
+    set(index, value) { this.elems[index] = value; }
+    get(index) { return this.elems[index]; }
+}
